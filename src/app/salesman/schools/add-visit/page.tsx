@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
@@ -28,7 +28,7 @@ const steps = [
   { number: 7, title: "Next Visit", component: "next" },
 ];
 
-export default function AddSchoolVisitPage() {
+function AddSchoolVisitForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
@@ -239,5 +239,33 @@ export default function AddSchoolVisitPage() {
         )}
       </div>
     </PageContainer>
+  );
+}
+
+export default function AddSchoolVisitPage() {
+  return (
+    <Suspense fallback={
+      <PageContainer>
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" disabled>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Add School Visit</CardTitle>
+            <CardDescription>Loading...</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center text-muted-foreground">Loading form...</div>
+            </div>
+          </CardContent>
+        </Card>
+      </PageContainer>
+    }>
+      <AddSchoolVisitForm />
+    </Suspense>
   );
 }

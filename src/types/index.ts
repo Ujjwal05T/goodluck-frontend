@@ -382,3 +382,36 @@ export interface CityPerformance {
   visits: number;
   conversionRate: number;
 }
+
+// QB (Question Bank) Types
+export interface QB {
+  id: string;
+  schoolName: string;
+  schoolBoard: string;
+  address: string;
+  city: string;
+  state: string;
+  strength: number;
+  createdDate: string;
+  lastUpdated: string;
+  status: "Active" | "Pending" | "Inactive";
+}
+
+export interface QBVisit {
+  id: string;
+  qbId: string;
+  schoolCity: string;
+  schoolName: string;
+  schoolBoard: string;
+  schoolStrength: number;
+  schoolAddress: string;
+  purposeOfVisit: string;
+  teacherName: string;
+  teacherDesignation: string;
+  teacherContactNo: string;
+  teacherEmail: string;
+  remarks: string;
+  visitDate: string;
+  salesmanId: string;
+  salesmanName: string;
+}

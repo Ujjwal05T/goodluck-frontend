@@ -426,10 +426,8 @@ export default function SalesmanDashboard() {
                 endAngle={-270}
               >
                 <RadialBar
-                  minAngle={15}
                   label={{ position: 'insideStart', fill: '#fff', fontSize: 12 }}
                   background
-                  clockWise
                   dataKey="value"
                 />
                 <Legend

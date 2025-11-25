@@ -12,14 +12,15 @@ import {
   Plus,
   Calendar,
   UserCircle,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const mobileNavItems = [
   { href: "/salesman/dashboard", label: "Dashboard", icon: Home },
   { href: "/salesman/schools", label: "Schools", icon: School },
+  { href: "/salesman/qbs", label: "QBs", icon: BookOpen },
   { href: "/salesman/booksellers", label: "Sellers", icon: Users },
-  { href: "/salesman/tada", label: "TA/DA", icon: DollarSign },
   { href: "/salesman/notifications", label: "Alerts", icon: Bell },
 ];
 
@@ -31,6 +32,10 @@ const desktopNavItems = [
   { href: "/salesman/schools", label: "My Schools", icon: School },
   { href: "/salesman/schools/add-visit", label: "Add School Visit", icon: Plus },
   { href: "/salesman/next-visits", label: "My Visits", icon: Calendar },
+
+  { type: "separator", label: "Question Banks" },
+  { href: "/salesman/qbs", label: "My QBs", icon: BookOpen },
+  { href: "/salesman/qbs/add-visit", label: "Add QB Visit", icon: Plus },
 
   { type: "separator", label: "Book Sellers" },
   { href: "/salesman/booksellers", label: "Book Sellers", icon: Users },

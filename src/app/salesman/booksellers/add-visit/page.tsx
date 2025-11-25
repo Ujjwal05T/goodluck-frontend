@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 
 import bookSellersData from "@/lib/mock-data/book-sellers.json";
 
-export default function AddBookSellerVisitPage() {
+function AddBookSellerVisitForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -351,5 +351,29 @@ export default function AddBookSellerVisitPage() {
         </div>
       </form>
     </PageContainer>
+  );
+}
+
+export default function AddBookSellerVisitPage() {
+  return (
+    <Suspense fallback={
+      <PageContainer>
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" disabled className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <PageHeader
+            title="Add Book Seller Visit"
+            description="Log your visit to a book seller"
+          />
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center text-muted-foreground">Loading...</div>
+        </div>
+      </PageContainer>
+    }>
+      <AddBookSellerVisitForm />
+    </Suspense>
   );
 }
