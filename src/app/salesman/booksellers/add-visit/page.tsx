@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
 import PageHeader from "@/components/layouts/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -12,29 +12,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 import bookSellersData from "@/lib/mock-data/book-sellers.json";
-import dropdownOptions from "@/lib/mock-data/dropdown-options.json";
 
 export default function AddBookSellerVisitPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [selectedCity, setSelectedCity] = useState("");
   const [formData, setFormData] = useState({
     bookSellerId: "",
     purposes: [] as string[],
-    paymentCollected: 0,
-    paymentDeadlines: [] as { amount: number; dueDate: string; percentage: number }[],
-    notes: "",
-  });
-
-  const [newDeadline, setNewDeadline] = useState({
-    amount: 0,
-    dueDate: "",
-    percentage: 0,
+    paymentReceivedGL: 0,
+    paymentReceivedVP: 0,
+    remark: "",
+    nextVisitDate: "",
+    reminder: "",
   });
 
   useEffect(() => {
@@ -59,23 +54,6 @@ export default function AddBookSellerVisitPage() {
     }
   };
 
-  const handleAddDeadline = () => {
-    if (newDeadline.amount > 0 && newDeadline.dueDate && newDeadline.percentage > 0) {
-      setFormData({
-        ...formData,
-        paymentDeadlines: [...formData.paymentDeadlines, newDeadline],
-      });
-      setNewDeadline({ amount: 0, dueDate: "", percentage: 0 });
-    }
-  };
-
-  const handleRemoveDeadline = (index: number) => {
-    setFormData({
-      ...formData,
-      paymentDeadlines: formData.paymentDeadlines.filter((_, i) => i !== index),
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -89,6 +67,20 @@ export default function AddBookSellerVisitPage() {
   };
 
   const selectedSeller = bookSellersData.find((s) => s.id === formData.bookSellerId);
+
+  // Get unique cities from book sellers assigned to current salesman
+  const cities = Array.from(
+    new Set(
+      bookSellersData
+        .filter((s) => s.assignedTo === "SM001")
+        .map((s) => s.city)
+    )
+  ).sort();
+
+  // Filter book sellers by selected city
+  const filteredSellers = selectedCity
+    ? bookSellersData.filter((s) => s.assignedTo === "SM001" && s.city === selectedCity)
+    : [];
 
   // Visit purposes relevant to booksellers
   const bookSellerPurposes = [
@@ -114,48 +106,109 @@ export default function AddBookSellerVisitPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Book Seller Selection */}
+        {/* City and Book Seller Selection */}
         <Card>
           <CardHeader>
             <CardTitle>Select Book Seller</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* City Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="city">Select City *</Label>
+              <Select
+                value={selectedCity}
+                onValueChange={(value) => {
+                  setSelectedCity(value);
+                  setFormData({ ...formData, bookSellerId: "" }); // Reset book seller when city changes
+                }}
+                required
+              >
+                <SelectTrigger id="city">
+                  <SelectValue placeholder="Select city first" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Book Seller Selection */}
             <div className="space-y-2">
               <Label htmlFor="bookSeller">Book Seller *</Label>
               <Select
                 value={formData.bookSellerId}
                 onValueChange={(value) => setFormData({ ...formData, bookSellerId: value })}
+                disabled={!selectedCity}
                 required
               >
                 <SelectTrigger id="bookSeller">
-                  <SelectValue placeholder="Select book seller" />
+                  <SelectValue placeholder={selectedCity ? "Select book seller" : "Select city first"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {bookSellersData
-                    .filter((s) => s.assignedTo === "SM001")
-                    .map((seller) => (
-                      <SelectItem key={seller.id} value={seller.id}>
-                        {seller.shopName} - {seller.ownerName}
-                      </SelectItem>
-                    ))}
+                  {filteredSellers.map((seller) => (
+                    <SelectItem key={seller.id} value={seller.id}>
+                      {seller.shopName} - {seller.ownerName}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
+            {/* Book Seller Details */}
             {selectedSeller && (
               <Card className="bg-muted/50">
-                <CardContent className="pt-4 space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Current Outstanding</span>
-                    <span className="font-medium text-destructive">
-                      ₹{(selectedSeller.currentOutstanding / 100000).toFixed(2)}L
-                    </span>
+                <CardContent className="pt-4 space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Shop Name</span>
+                        <span className="font-medium">{selectedSeller.shopName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Owner</span>
+                        <span className="font-medium">{selectedSeller.ownerName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Contact Number</span>
+                        <span className="font-medium">{selectedSeller.phone}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">City</span>
+                        <span className="font-medium">{selectedSeller.city}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Current Outstanding</span>
+                        <span className="font-medium text-destructive">
+                          ₹{(selectedSeller.currentOutstanding / 100000).toFixed(2)}L
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Credit Limit</span>
+                        <span className="font-medium">
+                          ₹{(selectedSeller.creditLimit / 100000).toFixed(2)}L
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">GST Number</span>
+                        <span className="font-medium text-xs">{selectedSeller.gstNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Email</span>
+                        <span className="font-medium text-xs">{selectedSeller.email}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Credit Limit</span>
-                    <span className="font-medium">
-                      ₹{(selectedSeller.creditLimit / 100000).toFixed(2)}L
-                    </span>
+                  <div className="border-t pt-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-sm text-muted-foreground">Address</span>
+                      <span className="font-medium text-sm">{selectedSeller.address}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -200,137 +253,89 @@ export default function AddBookSellerVisitPage() {
               <CardTitle>Payment Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="paymentCollected">Payment Collected (₹)</Label>
-                <Input
-                  id="paymentCollected"
-                  type="number"
-                  min="0"
-                  placeholder="Enter amount collected"
-                  value={formData.paymentCollected || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      paymentCollected: parseInt(e.target.value) || 0,
-                    })
-                  }
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="paymentReceivedGL">Payment Received GL (₹)</Label>
+                  <Input
+                    id="paymentReceivedGL"
+                    type="number"
+                    min="0"
+                    placeholder="Enter GL payment amount"
+                    value={formData.paymentReceivedGL || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        paymentReceivedGL: parseInt(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="paymentReceivedVP">Payment Received VP (₹)</Label>
+                  <Input
+                    id="paymentReceivedVP"
+                    type="number"
+                    min="0"
+                    placeholder="Enter VP payment amount"
+                    value={formData.paymentReceivedVP || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        paymentReceivedVP: parseInt(e.target.value) || 0,
+                      })
+                    }
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Payment Follow-Up / Deadlines */}
+        {/* Remark */}
         <Card>
           <CardHeader>
-            <CardTitle>Set Payment Deadlines (Optional)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (₹)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  min="0"
-                  placeholder="Amount"
-                  value={newDeadline.amount || ""}
-                  onChange={(e) =>
-                    setNewDeadline({
-                      ...newDeadline,
-                      amount: parseInt(e.target.value) || 0,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input
-                  id="dueDate"
-                  type="date"
-                  value={newDeadline.dueDate}
-                  onChange={(e) =>
-                    setNewDeadline({ ...newDeadline, dueDate: e.target.value })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="percentage">Percentage</Label>
-                <Input
-                  id="percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="%"
-                  value={newDeadline.percentage || ""}
-                  onChange={(e) =>
-                    setNewDeadline({
-                      ...newDeadline,
-                      percentage: parseInt(e.target.value) || 0,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddDeadline}
-              disabled={
-                !newDeadline.amount || !newDeadline.dueDate || !newDeadline.percentage
-              }
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Deadline
-            </Button>
-
-            {formData.paymentDeadlines.length > 0 && (
-              <div className="space-y-2 mt-4">
-                <Label>Added Deadlines</Label>
-                {formData.paymentDeadlines.map((deadline, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">₹{deadline.amount.toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Due: {new Date(deadline.dueDate).toLocaleDateString()} -{" "}
-                            {deadline.percentage}%
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveDeadline(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Notes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Visit Notes</CardTitle>
+            <CardTitle>Remark</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label htmlFor="notes">Additional Notes (Optional)</Label>
+              <Label htmlFor="remark">Remark (Optional)</Label>
               <Textarea
-                id="notes"
-                placeholder="Add any additional notes about the visit..."
-                rows={6}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                id="remark"
+                placeholder="Add any remarks about the visit..."
+                rows={4}
+                value={formData.remark}
+                onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
               />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Schedule Next Visit */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Schedule Next Visit</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nextVisitDate">Next Visit Date (Optional)</Label>
+                <Input
+                  id="nextVisitDate"
+                  type="date"
+                  value={formData.nextVisitDate}
+                  onChange={(e) => setFormData({ ...formData, nextVisitDate: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="reminder">Reminder (Optional)</Label>
+                <Input
+                  id="reminder"
+                  type="text"
+                  placeholder="e.g., Follow up on payment"
+                  value={formData.reminder}
+                  onChange={(e) => setFormData({ ...formData, reminder: e.target.value })}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

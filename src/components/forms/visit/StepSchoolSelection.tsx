@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Users, BookOpen } from "lucide-react";
 
-import dropdownOptions from "@/lib/mock-data/dropdown-options.json";
 import schoolsData from "@/lib/mock-data/schools.json";
 
 interface StepProps {
@@ -18,11 +17,22 @@ export default function StepSchoolSelection({ formData, updateFormData }: StepPr
   const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchool, setSelectedSchool] = useState<any>(null);
 
+  // Get unique cities that have schools assigned to SM001
+  const availableCities = Array.from(
+    new Set(
+      schoolsData
+        .filter((s) => s.assignedTo === "SM001")
+        .map((s) => s.city)
+    )
+  ).sort();
+
   useEffect(() => {
     if (formData.city) {
       // Filter schools by city
       const citySchools = schoolsData.filter((s) => s.city === formData.city && s.assignedTo === "SM001");
       setSchools(citySchools);
+    } else {
+      setSchools([]);
     }
   }, [formData.city]);
 
@@ -34,7 +44,7 @@ export default function StepSchoolSelection({ formData, updateFormData }: StepPr
         updateFormData({ city: school.city });
       }
     }
-  }, [formData.schoolId]);
+  }, [formData.schoolId, updateFormData]);
 
   return (
     <div className="space-y-6">
@@ -52,7 +62,7 @@ export default function StepSchoolSelection({ formData, updateFormData }: StepPr
             <SelectValue placeholder="Select city" />
           </SelectTrigger>
           <SelectContent>
-            {dropdownOptions.cities.map((city) => (
+            {availableCities.map((city) => (
               <SelectItem key={city} value={city}>
                 {city}
               </SelectItem>
@@ -87,6 +97,23 @@ export default function StepSchoolSelection({ formData, updateFormData }: StepPr
         {!formData.city && (
           <p className="text-xs text-muted-foreground">Please select a city first</p>
         )}
+      </div>
+
+      {/* Supply Through */}
+      <div className="space-y-2">
+        <Label htmlFor="supplyThrough">Supply Through *</Label>
+        <Select
+          value={formData.supplyThrough}
+          onValueChange={(value) => updateFormData({ supplyThrough: value })}
+        >
+          <SelectTrigger id="supplyThrough">
+            <SelectValue placeholder="Select supply method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Direct">Direct</SelectItem>
+            <SelectItem value="Book Seller">Book Seller</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* School Details (Auto-populated) */}

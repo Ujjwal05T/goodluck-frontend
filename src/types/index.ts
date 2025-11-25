@@ -48,6 +48,22 @@ export interface Contact {
   email?: string;
 }
 
+export interface ContactPerson {
+  id: string;
+  name: string;
+  designation: string;
+  email: string;
+  contactNo: string;
+  schoolId: string;
+  schoolName: string;
+  schoolCity: string;
+  schoolBoard: string;
+  schoolStrength: number;
+  schoolAddress: string;
+  assignedTo: string;
+  addedDate: string;
+}
+
 // Salesman Types
 export interface Salesman {
   id: string;

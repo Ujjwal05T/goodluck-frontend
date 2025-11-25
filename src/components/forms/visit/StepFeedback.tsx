@@ -16,6 +16,52 @@ interface StepProps {
 export default function StepFeedback({ formData, updateFormData }: StepProps) {
   return (
     <div className="space-y-6">
+      {/* School Feedback */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3 mb-4">
+            <MessageSquare className="h-5 w-5 text-muted-foreground mt-0.5" />
+            <div>
+              <h4 className="font-medium">School Feedback</h4>
+              <p className="text-sm text-muted-foreground">
+                Feedback received from the school
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="schoolFeedback">School's Feedback (Optional)</Label>
+            <Textarea
+              id="schoolFeedback"
+              placeholder="Enter any feedback or comments from the school..."
+              rows={4}
+              value={formData.schoolFeedback}
+              onChange={(e) => updateFormData({ schoolFeedback: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              {formData.schoolFeedback?.length || 0} characters
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* School Special Request */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-2">
+            <Label htmlFor="schoolSpecialRequest">School Special Request (Optional)</Label>
+            <Textarea
+              id="schoolSpecialRequest"
+              placeholder="Any special requests or requirements from the school..."
+              rows={3}
+              value={formData.schoolSpecialRequest}
+              onChange={(e) => updateFormData({ schoolSpecialRequest: e.target.value })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Product Feedback */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-start gap-3 mb-4">

@@ -67,6 +67,21 @@ export default function StepNextVisit({ formData, updateFormData }: StepProps) {
                 </Select>
               </div>
             )}
+
+            {/* Reminder */}
+            <div className="space-y-2">
+              <Label htmlFor="reminder">Reminder (Optional)</Label>
+              <Input
+                id="reminder"
+                type="text"
+                placeholder="e.g., Follow up on payment, Check new book requirements"
+                value={formData.reminder}
+                onChange={(e) => updateFormData({ reminder: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Set a reminder note for this school
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

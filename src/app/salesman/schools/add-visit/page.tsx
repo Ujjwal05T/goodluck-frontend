@@ -39,6 +39,7 @@ export default function AddSchoolVisitPage() {
     // Step 1
     city: "",
     schoolId: "",
+    supplyThrough: "",
     // Step 2
     selectedContacts: [] as string[],
     newContacts: [] as { name: string; role: string }[],
@@ -50,14 +51,20 @@ export default function AddSchoolVisitPage() {
     managerId: "",
     managerType: "",
     // Step 5
+    specimenRequired: "",
     specimensGiven: [] as any[],
     specimensReturned: [] as any[],
+    paymentReceivedGL: 0,
+    paymentReceivedVP: 0,
     // Step 6
     feedbackCategory: "",
     feedbackComment: "",
+    schoolFeedback: "",
+    schoolSpecialRequest: "",
     // Step 7
     nextVisitDate: "",
     nextVisitPurpose: "",
+    reminder: "",
   });
 
   useEffect(() => {
