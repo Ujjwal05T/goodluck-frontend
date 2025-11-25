@@ -16,6 +16,9 @@ import {
   BookOpen,
   Menu,
   X,
+  ClipboardList,
+  MapPinned,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +27,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 const navItems = [
   { href: "/salesman/dashboard", label: "Dashboard", icon: Home },
   { href: "/salesman/attendance", label: "Attendance", icon: CheckCircle2 },
+  { href: "/salesman/today-visits", label: "Today's Visits", icon: MapPinned },
+  { href: "/salesman/tour-plan", label: "My Tour Plan", icon: ClipboardList },
+  { href: "/salesman/visit-history", label: "Visit History", icon: History },
 
   { type: "separator", label: "Schools" },
   { href: "/salesman/schools", label: "My Schools", icon: School },
