@@ -17,6 +17,7 @@ import {
   TrendingUp,
   Database,
   Palette,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ const navGroups = [
     label: "Management",
     items: [
       { href: "/admin/team", label: "Sales Team", icon: Users },
+      { href: "/admin/managers", label: "Managers", icon: UserCog },
+      { href: "/admin/books", label: "Books", icon: BookOpen },
       { href: "/admin/tour-plans", label: "Tour Plans", icon: Calendar },
       { href: "/admin/tada", label: "TA/DA Approval", icon: DollarSign },
       { href: "/admin/specimen", label: "Specimen Tracking", icon: BookOpen },
@@ -47,6 +50,9 @@ const navGroups = [
   {
     label: "Reports",
     items: [
+      { href: "/admin/reports/attendance", label: "Attendance Report", icon: BarChart3 },
+      { href: "/admin/reports/daily", label: "Daily Report", icon: FileText },
+      { href: "/admin/reports/date-wise", label: "Date-wise Report", icon: TrendingUp },
       { href: "/admin/reports/visits", label: "Visit Reports", icon: BarChart3 },
       { href: "/admin/reports/compliance", label: "Policy Compliance", icon: Award },
       { href: "/admin/reports/loyalty", label: "Loyalty Reports", icon: TrendingUp },

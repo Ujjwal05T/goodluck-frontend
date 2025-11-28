@@ -415,3 +415,32 @@ export interface QBVisit {
   salesmanId: string;
   salesmanName: string;
 }
+
+// Book Types
+export interface Book {
+  id: string;
+  title: string;
+  class: string;
+  mrp: number;
+  sellingPrice: number;
+  specimenPrice: number;
+  publishedUnder: "Goodluck Publications" | "Vidhyarthi Prakashan";
+  subject?: string;
+  board?: string;
+  isbn?: string;
+  stockAvailable?: number;
+  createdDate: string;
+  lastUpdated: string;
+}
+
+// Manager Types
+export interface Manager {
+  id: string;
+  name: string;
+  email: string;
+  contactNo: string;
+  state: string;
+  assignedSalesmen: string[];
+  createdDate: string;
+  status: "Active" | "Inactive";
+}
