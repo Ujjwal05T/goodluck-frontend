@@ -187,4 +187,15 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
+
+  /* Greyish placeholder color for better distinction */
+  ::placeholder {
+    color: hsl(0 0% 60%);
+    opacity: 0.6;
+  }
+
+  .dark ::placeholder {
+    color: hsl(0 0% 50%);
+    opacity: 0.5;
+  }
 }

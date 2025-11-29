@@ -312,7 +312,7 @@ export default function BookSellerListPage() {
                             </Badge>
                           </div>
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 mt-1" />
                       </div>
                     </div>
                   </div>

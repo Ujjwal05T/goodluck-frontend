@@ -18,6 +18,8 @@ import {
   Database,
   Palette,
   UserCog,
+  Store,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,14 +31,44 @@ const navGroups = [
     ],
   },
   {
+  label: "Salesmen",
+  items: [
+      { href: "/admin/team", label: "Sales Team", icon: Users }
+  ]
+  },
+ 
+   {
+    label: "Reports",
+    items: [
+      { href: "/admin/reports/attendance", label: "Attendance Report", icon: BarChart3 },
+      { href: "/admin/reports/daily", label: "Daily Report", icon: FileText },
+      { href: "/admin/reports/date-wise", label: "Date-wise Report", icon: TrendingUp },
+      { href: "/admin/reports/visits", label: "Visit Reports", icon: BarChart3 },
+    //  { href: "/admin/reports/compliance", label: "Policy Compliance", icon: Award },
+      { href: "/admin/reports/loyalty", label: "Loyalty Reports", icon: TrendingUp },
+     // { href: "/admin/reports/gap-analysis", label: "Gap Analysis", icon: BarChart3 },
+    ],
+  },
+ 
+   {
+    label: "Year Comparison",
+    items: [
+      { href: "/admin/analytics/year-comparison", label: "Year Comparison", icon: TrendingUp },
+    ]},
+     {
+    label: "Lists",
+    items: [
+      { href: "/admin/lists/schools", label: "School List", icon: School },
+      { href: "/admin/lists/contacts", label: "Contact Persons", icon: User },
+      { href: "/admin/lists/booksellers", label: "Bookseller List", icon: Store },
+    ],
+  },
+   {
     label: "Management",
     items: [
-      { href: "/admin/team", label: "Sales Team", icon: Users },
       { href: "/admin/managers", label: "Managers", icon: UserCog },
-      { href: "/admin/books", label: "Books", icon: BookOpen },
       { href: "/admin/tour-plans", label: "Tour Plans", icon: Calendar },
       { href: "/admin/tada", label: "TA/DA Approval", icon: DollarSign },
-      { href: "/admin/specimen", label: "Specimen Tracking", icon: BookOpen },
       { href: "/admin/feedback", label: "Feedback Manager", icon: MessageSquare },
     ],
   },
@@ -48,17 +80,12 @@ const navGroups = [
     ],
   },
   {
-    label: "Reports",
+   label: "Books & Resources",
     items: [
-      { href: "/admin/reports/attendance", label: "Attendance Report", icon: BarChart3 },
-      { href: "/admin/reports/daily", label: "Daily Report", icon: FileText },
-      { href: "/admin/reports/date-wise", label: "Date-wise Report", icon: TrendingUp },
-      { href: "/admin/reports/visits", label: "Visit Reports", icon: BarChart3 },
-      { href: "/admin/reports/compliance", label: "Policy Compliance", icon: Award },
-      { href: "/admin/reports/loyalty", label: "Loyalty Reports", icon: TrendingUp },
-      { href: "/admin/reports/gap-analysis", label: "Gap Analysis", icon: BarChart3 },
-    ],
+      { href: "/admin/books", label: "Books", icon: BookOpen },
+      { href: "/admin/specimen", label: "Specimen Tracking", icon: BookOpen },],
   },
+ 
   {
     label: "Settings",
     items: [
