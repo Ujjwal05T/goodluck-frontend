@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -20,8 +21,11 @@ import {
   UserCog,
   Store,
   User,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 const navGroups = [
   {
@@ -53,7 +57,9 @@ const navGroups = [
    {
     label: "Year Comparison",
     items: [
-      { href: "/admin/analytics/year-comparison", label: "Year Comparison", icon: TrendingUp },
+      { href: "/admin/analytics/year-comparison/1-year", label: "1-Year Users", icon: Calendar },
+      { href: "/admin/analytics/year-comparison/2-year", label: "2-Year Users", icon: TrendingUp },
+      { href: "/admin/analytics/year-comparison/3-year", label: "3-Year Users", icon: Award },
     ]},
      {
     label: "Lists",
@@ -96,14 +102,15 @@ const navGroups = [
   },
 ];
 
-export default function AdminSidebar() {
+// Sidebar content component to be reused
+function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:bg-background">
+    <>
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/admin/dashboard" className="flex items-center space-x-2">
+        <Link href="/admin/dashboard" className="flex items-center space-x-2" onClick={onLinkClick}>
           <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold">CRM</span>
           </div>
@@ -130,6 +137,7 @@ export default function AdminSidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={onLinkClick}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:translate-x-1",
                       isActive
@@ -159,6 +167,49 @@ export default function AdminSidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export default function AdminSidebar() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {/* Mobile Header with Hamburger */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex h-16 items-center border-b bg-background px-4 gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className="lg:hidden"
+        >
+          <Menu className="h-6 w-6" />
+          <span className="sr-only">Toggle menu</span>
+        </Button>
+
+        <Link href="/admin/dashboard" className="flex items-center space-x-2">
+          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">CRM</span>
+          </div>
+          <span className="font-semibold text-sm">Admin Portal</span>
+        </Link>
+      </div>
+
+      {/* Mobile Sidebar (Sheet/Drawer) */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="left" className="w-64 p-0">
+          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+          <div className="flex h-full flex-col">
+            <SidebarContent onLinkClick={() => setOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:border-r lg:bg-background">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
