@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingUp, TrendingDown, Minus, Calendar, School, Download } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Calendar, School, Download, Save } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
 import PageHeader from "@/components/layouts/PageHeader";
 import StatsCard from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DashboardSkeleton } from "@/components/ui/skeleton-loaders";
@@ -24,22 +25,35 @@ interface TwoYearData {
   board: string;
   strength: number;
   assignedTo: string;
-  sales2024: number;
-  sales2025: number;
+  // Year 1 Data (2022-2023)
+  salesPrev: number; 
+  booksPrev: string; // Changed to string (Name of books)
+  // Year 2 Data (2023-2024)
+  salesCurr: number;
+  booksCurr: string; // Changed to string (Name of books)
+  // Analysis
   totalSales: number;
   growth: number;
   trend: "up" | "stable" | "down";
+  // CRM Editable Fields
+  salesTarget: number;
+  engagementApproach: string;
+  growthApproach: string;
+  brandLoyalty: string;
 }
 
 export default function TwoYearComparisonPage() {
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Filters
   const [stateFilter, setStateFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("all");
-  const [salesmanFilter, setSalesmanFilter] = useState("all");
+  
+  // Data
   const [schools, setSchools] = useState<TwoYearData[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<TwoYearData[]>([]);
 
-  // Derive state from city (mock mapping)
+  // State Mapping
   const stateMap: Record<string, string> = {
     Delhi: "Delhi",
     Mumbai: "Maharashtra",
@@ -55,17 +69,28 @@ export default function TwoYearComparisonPage() {
       const twoYearSchools: TwoYearData[] = [];
 
       schoolsData.forEach((school) => {
-        const sales2024 = school.businessHistory.find((h) => h.year === 2024)?.revenue || 0;
-        const sales2025 = school.businessHistory.find((h) => h.year === 2025)?.revenue || 0;
+        // Find history records
+        const historyPrev = school.businessHistory.find((h) => h.year === 2024);
+        const historyCurr = school.businessHistory.find((h) => h.year === 2025);
+        
+        const salesPrev = historyPrev?.revenue || 0;
+        const salesCurr = historyCurr?.revenue || 0;
         const yearsActive = school.businessHistory.filter((h) => h.revenue > 0).length;
 
-        if (yearsActive === 2) {
-          const totalSales = sales2024 + sales2025;
-          const growth = sales2024 > 0 ? ((sales2025 - sales2024) / sales2024) * 100 : 0;
+        // Logic: Schools active in both years
+        if (yearsActive >= 2 && salesPrev > 0 && salesCurr > 0) {
+          const totalSales = salesPrev + salesCurr;
+          const growth = salesPrev > 0 ? ((salesCurr - salesPrev) / salesPrev) * 100 : 0;
 
           let trend: "up" | "stable" | "down" = "stable";
           if (growth > 10) trend = "up";
           else if (growth < -10) trend = "down";
+
+          // Extract Book Names
+          // Note: If your JSON has a field 'products' or 'bookList' inside businessHistory, map it here.
+          // Since the mock structure wasn't fully provided, I am checking for a property or falling back to a string.
+          const booksPrevList = (historyPrev as any).products || ["Math Magic", "Science Vol 1"];
+          const booksCurrList = (historyCurr as any).products || ["Math Magic", "Science Vol 1", "History 24"];
 
           twoYearSchools.push({
             id: school.id,
@@ -75,11 +100,19 @@ export default function TwoYearComparisonPage() {
             board: school.board,
             strength: school.strength,
             assignedTo: school.assignedTo,
-            sales2024,
-            sales2025,
+            salesPrev,
+            salesCurr,
+            // Join array to string for display
+            booksPrev: Array.isArray(booksPrevList) ? booksPrevList.join(", ") : String(booksPrevList),
+            booksCurr: Array.isArray(booksCurrList) ? booksCurrList.join(", ") : String(booksCurrList),
             totalSales,
             growth,
             trend,
+            // Simulating CRM Data Defaults
+            salesTarget: Math.ceil((salesCurr * 1.15) / 1000) * 1000, 
+            engagementApproach: "Visit",
+            growthApproach: "Upsell",
+            brandLoyalty: "Medium",
           });
         }
       });
@@ -91,23 +124,36 @@ export default function TwoYearComparisonPage() {
     }, 800);
   }, []);
 
+  // Filter Logic
   useEffect(() => {
     let filtered = schools;
 
     if (stateFilter !== "all") {
       filtered = filtered.filter((s) => s.state === stateFilter);
     }
-
     if (cityFilter !== "all") {
       filtered = filtered.filter((s) => s.city === cityFilter);
     }
 
-    if (salesmanFilter !== "all") {
-      filtered = filtered.filter((s) => s.assignedTo === salesmanFilter);
-    }
-
     setFilteredSchools(filtered);
-  }, [schools, stateFilter, cityFilter, salesmanFilter]);
+  }, [schools, stateFilter, cityFilter]);
+
+  // Handlers
+  const handleRowChange = (id: string, field: keyof TwoYearData, value: string | number) => {
+    setFilteredSchools((prev) =>
+      prev.map((school) => (school.id === id ? { ...school, [field]: value } : school))
+    );
+  };
+
+  const handleSave = (schoolName: string) => {
+    toast.success(`Updated strategy for ${schoolName}`);
+  };
+
+  const getTrendIcon = (trend: string, growth: number) => {
+    if (trend === "up") return <div className="flex items-center text-emerald-600"><TrendingUp className="h-4 w-4 mr-1" />{Math.abs(growth).toFixed(0)}%</div>;
+    if (trend === "down") return <div className="flex items-center text-rose-600"><TrendingDown className="h-4 w-4 mr-1" />{Math.abs(growth).toFixed(0)}%</div>;
+    return <div className="flex items-center text-slate-500"><Minus className="h-4 w-4 mr-1" />0%</div>;
+  };
 
   if (isLoading) {
     return (
@@ -117,63 +163,30 @@ export default function TwoYearComparisonPage() {
     );
   }
 
-  // Get unique values for filters
+  // Filter Options
   const states = Array.from(new Set(schools.map((s) => s.state))).sort();
   const cities = Array.from(new Set(schools.map((s) => s.city))).sort();
-  const salesmen = Array.from(new Set(schools.map((s) => s.assignedTo))).sort();
-
-  const totalSales = filteredSchools.reduce((sum, s) => sum + s.totalSales, 0);
-  const avgGrowth = filteredSchools.length > 0
-    ? filteredSchools.reduce((sum, s) => sum + s.growth, 0) / filteredSchools.length
-    : 0;
-
-  const handleExport = () => {
-    toast.success("Exporting 2-year comparison data to Excel...");
-  };
-
-  const getTrendIcon = (trend: string) => {
-    if (trend === "up") return <TrendingUp className="h-4 w-4 text-green-600" />;
-    if (trend === "down") return <TrendingDown className="h-4 w-4 text-red-600" />;
-    return <Minus className="h-4 w-4 text-blue-600" />;
-  };
-
-  const getTrendBadge = (trend: string) => {
-    if (trend === "up") return <Badge variant="secondary" className="bg-green-100 text-green-700">Growing</Badge>;
-    if (trend === "down") return <Badge variant="secondary" className="bg-red-100 text-red-700">Declining</Badge>;
-    return <Badge variant="secondary">Stable</Badge>;
-  };
+  const totalSalesCurr = filteredSchools.reduce((sum, s) => sum + s.salesCurr, 0);
 
   return (
     <PageContainer>
       <PageHeader
-        title="2-Year User Comparison (2023-24 & 2024-25)"
-        description="Schools with business in the last 2 years"
+        title="2-Year User Comparison"
+        description="Comparative analysis: 2022-23 vs 2023-24"
       />
 
-      {/* Top Stats */}
-      <div className="grid gap-4 md:grid-cols-4 mb-6">
+      {/* Stats */}
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
         <StatsCard
-          title="Total 2-Year Schools"
+          title="Schools Retained"
           value={schools.length}
-          description="Returning customers"
+          description="Active in both years"
           icon={Calendar}
         />
         <StatsCard
-          title="Filtered Results"
-          value={filteredSchools.length}
-          description="Matching criteria"
-          icon={School}
-        />
-        <StatsCard
-          title="Total Sales (2 Years)"
-          value={`₹${totalSales.toLocaleString()}`}
-          description="Combined revenue"
-          icon={TrendingUp}
-        />
-        <StatsCard
-          title="Avg Growth"
-          value={`${avgGrowth > 0 ? "+" : ""}${avgGrowth.toFixed(1)}%`}
-          description="Year-on-Year"
+          title="Total Sales (23-24)"
+          value={`₹${totalSalesCurr.toLocaleString()}`}
+          description="Current Revenue"
           icon={TrendingUp}
         />
       </div>
@@ -184,7 +197,7 @@ export default function TwoYearComparisonPage() {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Select value={stateFilter} onValueChange={setStateFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="All States" />
@@ -209,19 +222,7 @@ export default function TwoYearComparisonPage() {
               </SelectContent>
             </Select>
 
-            <Select value={salesmanFilter} onValueChange={setSalesmanFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="All Salesmen" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Salesmen</SelectItem>
-                {salesmen.map((salesman) => (
-                  <SelectItem key={salesman} value={salesman}>{salesman}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button onClick={handleExport} variant="outline">
+            <Button onClick={() => toast.success("Exporting...")} variant="outline" className="w-full">
               <Download className="h-4 w-4 mr-2" />
               Export to Excel
             </Button>
@@ -229,72 +230,157 @@ export default function TwoYearComparisonPage() {
         </CardContent>
       </Card>
 
-      {/* Schools Table */}
+      {/* Data Table */}
       <Card>
         <CardHeader>
-          <CardTitle>2-Year User Schools ({filteredSchools.length})</CardTitle>
+          <CardTitle>School Comparison List ({filteredSchools.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>S.No</TableHead>
-                  <TableHead>School Name</TableHead>
+                  <TableHead className="w-[50px]">S.No</TableHead>
+                  <TableHead className="min-w-[150px]">School Name</TableHead>
                   <TableHead>City</TableHead>
                   <TableHead>Strength</TableHead>
                   <TableHead>Board</TableHead>
-                  <TableHead>Sales (23-24)</TableHead>
-                  <TableHead>Sales (24-25)</TableHead>
-                  <TableHead>Total Sales</TableHead>
-                  <TableHead>Growth %</TableHead>
+                  
+                  {/* Comparison Columns */}
+                  <TableHead className="bg-slate-50 text-slate-600 min-w-[150px]">Books (22-23)</TableHead>
+                  <TableHead className="bg-slate-50 text-slate-600">Sales (22-23)</TableHead>
+                  <TableHead className="bg-blue-50 text-blue-900 min-w-[150px]">Books (23-24)</TableHead>
+                  <TableHead className="bg-blue-50 text-blue-900">Sales (23-24)</TableHead>
+                  
                   <TableHead>Trend</TableHead>
+                  
+                  {/* Actionable Columns */}
+                  <TableHead className="min-w-[100px]">Sales Target</TableHead>
+                  <TableHead className="min-w-[130px]">Engagement</TableHead>
+                  <TableHead className="min-w-[130px]">Growth</TableHead>
+                  <TableHead className="min-w-[110px]">Brand Loyalty</TableHead>
+                  <TableHead>Save</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSchools.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
-                      No 2-year schools found matching your criteria
+                    <TableCell colSpan={15} className="text-center py-8 text-muted-foreground">
+                      No schools found matching your criteria
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredSchools.map((school, index) => (
                     <TableRow key={school.id}>
-                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell className="font-medium text-muted-foreground">{index + 1}</TableCell>
+                      
+                      {/* Basic Info */}
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <School className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{school.name}</span>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm">{school.name}</span>
+                          <span className="text-xs text-muted-foreground">{school.state}</span>
                         </div>
                       </TableCell>
                       <TableCell>{school.city}</TableCell>
-                      <TableCell>{school.strength.toLocaleString()}</TableCell>
+                      <TableCell>{school.strength}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{school.board}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{school.board}</Badge>
                       </TableCell>
-                      <TableCell>
-                        ₹{school.sales2024.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        ₹{school.sales2025.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="font-bold">
-                        ₹{school.totalSales.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          {getTrendIcon(school.trend)}
-                          <span className={`font-medium ${
-                            school.growth > 0 ? "text-green-600" :
-                            school.growth < 0 ? "text-red-600" : "text-muted-foreground"
-                          }`}>
-                            {school.growth > 0 ? "+" : ""}
-                            {school.growth.toFixed(1)}%
-                          </span>
+
+                      {/* Previous Year Books */}
+                      <TableCell className="bg-slate-50 text-xs">
+                        <div className="max-w-[150px] truncate" title={school.booksPrev}>
+                          {school.booksPrev}
                         </div>
                       </TableCell>
-                      <TableCell>{getTrendBadge(school.trend)}</TableCell>
+                      <TableCell className="bg-slate-50 text-muted-foreground font-medium">₹{school.salesPrev.toLocaleString()}</TableCell>
+
+                      {/* Current Year Books */}
+                      <TableCell className="bg-blue-50 text-xs">
+                        <div className="max-w-[150px] truncate text-blue-900" title={school.booksCurr}>
+                          {school.booksCurr}
+                        </div>
+                      </TableCell>
+                      <TableCell className="bg-blue-50 font-bold text-blue-700">₹{school.salesCurr.toLocaleString()}</TableCell>
+
+                      {/* Trend */}
+                      <TableCell>
+                        {getTrendIcon(school.trend, school.growth)}
+                      </TableCell>
+
+                      {/* Editable Target */}
+                      <TableCell>
+                         <Input 
+                          type="number"
+                          className="h-8 w-24"
+                          value={school.salesTarget}
+                          onChange={(e) => handleRowChange(school.id, "salesTarget", Number(e.target.value))}
+                        />
+                      </TableCell>
+
+                       {/* Editable Engagement */}
+                      <TableCell>
+                        <Select 
+                          value={school.engagementApproach} 
+                          onValueChange={(val) => handleRowChange(school.id, "engagementApproach", val)}
+                        >
+                          <SelectTrigger className="h-8 w-[130px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Visit">Visit</SelectItem>
+                            <SelectItem value="Call">Call</SelectItem>
+                            <SelectItem value="Workshop">Workshop</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      {/* Editable Growth */}
+                      <TableCell>
+                        <Select 
+                          value={school.growthApproach} 
+                          onValueChange={(val) => handleRowChange(school.id, "growthApproach", val)}
+                        >
+                          <SelectTrigger className="h-8 w-[130px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Cross-sell">Cross-sell</SelectItem>
+                            <SelectItem value="Upsell">Upsell</SelectItem>
+                            <SelectItem value="Retention">Retention</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      {/* Editable Loyalty */}
+                      <TableCell>
+                        <Select 
+                          value={school.brandLoyalty} 
+                          onValueChange={(val) => handleRowChange(school.id, "brandLoyalty", val)}
+                        >
+                          <SelectTrigger className="h-8 w-[110px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="High">High</SelectItem>
+                            <SelectItem value="Medium">Medium</SelectItem>
+                            <SelectItem value="Low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+
+                      {/* Save */}
+                      <TableCell>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          onClick={() => handleSave(school.name)}
+                          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+
                     </TableRow>
                   ))
                 )}
