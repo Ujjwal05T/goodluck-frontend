@@ -1,21 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, School, BookOpen, DollarSign, TrendingUp, CheckCircle2, AlertCircle, Clock, BarChart3, PieChart as PieChartIcon } from "lucide-react";
+import { Users, School, BookOpen, DollarSign, TrendingUp, CheckCircle2, AlertCircle, BarChart3, Filter, Calendar } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
 import PageHeader from "@/components/layouts/PageHeader";
 import StatsCard from "@/components/dashboard/StatsCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardSkeleton } from "@/components/ui/skeleton-loaders";
+import { Progress } from "@/components/ui/progress";
 import {
   BarChart,
   Bar,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell,
   AreaChart,
   Area,
   XAxis,
@@ -47,6 +46,10 @@ const COLORS = {
 
 export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
+  const [stateFilter, setStateFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
+  const [monthFilter, setMonthFilter] = useState("2025-11");
+
   const [stats, setStats] = useState({
     totalSalesmen: 0,
     totalSchools: 0,
@@ -61,14 +64,14 @@ export default function AdminDashboard() {
   // Chart data states
   const [teamPerformance, setTeamPerformance] = useState<any[]>([]);
   const [visitTrends, setVisitTrends] = useState<any[]>([]);
-  const [schoolDistribution, setSchoolDistribution] = useState<any[]>([]);
-  const [specimenUtilizationData, setSpecimenUtilizationData] = useState<any[]>([]);
-  const [tadaStatusData, setTadaStatusData] = useState<any[]>([]);
+  const [visitsPerSalesman, setVisitsPerSalesman] = useState<any[]>([]);
+  const [monthlyVisitsPerSalesman, setMonthlyVisitsPerSalesman] = useState<any[]>([]);
+  const [salesmenNoVisitsYesterday, setSalesmenNoVisitsYesterday] = useState<any[]>([]);
+  const [specimenDetailData, setSpecimenDetailData] = useState<any[]>([]);
 
   useEffect(() => {
     // Simulate data loading
     setTimeout(() => {
-      const today = new Date().toISOString().split("T")[0];
       const todayVisits = visitsData.filter((v) => v.date.startsWith("2025-11"));
 
       setStats({
@@ -84,7 +87,7 @@ export default function AdminDashboard() {
 
       // Team Performance Chart Data
       const performanceData = salesmenData.map((salesman) => ({
-        name: salesman.name.split(" ")[0], // First name only for cleaner display
+        name: salesman.name.split(" ")[0],
         achieved: salesman.salesAchieved,
         target: salesman.salesTarget,
         achievement: Math.round((salesman.salesAchieved / salesman.salesTarget) * 100),
@@ -93,7 +96,7 @@ export default function AdminDashboard() {
 
       // Visit Trends (Last 7 days)
       const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const trendsData = days.map((day, index) => ({
+      const trendsData = days.map((day) => ({
         day,
         schools: Math.floor(Math.random() * 15) + 5,
         booksellers: Math.floor(Math.random() * 8) + 2,
@@ -104,39 +107,151 @@ export default function AdminDashboard() {
       });
       setVisitTrends(trendsData);
 
-      // School Distribution
-      const pattakat = schoolsData.filter((s) => s.isPattakat).length;
-      const regular = schoolsData.length - pattakat;
-      setSchoolDistribution([
-        { name: "Pattakat Schools", value: pattakat, color: COLORS.success },
-        { name: "Regular Schools", value: regular, color: COLORS.primary },
-      ]);
-
-      // Specimen Utilization by Salesman
-      const utilizationData = salesmenData.map((salesman) => ({
-        name: salesman.name.split(" ")[0],
-        used: salesman.specimenUsed,
-        remaining: salesman.specimenBudget - salesman.specimenUsed,
-        utilization: Math.round((salesman.specimenUsed / salesman.specimenBudget) * 100),
-      }));
-      setSpecimenUtilizationData(utilizationData);
-
-      // TA/DA Status Distribution
-      const pendingCount = tadaClaimsData.filter((t) => t.status === "Pending").length;
-      const approvedCount = tadaClaimsData.filter((t) => t.status === "Approved").length;
-      const rejectedCount = tadaClaimsData.filter((t) => t.status === "Rejected").length;
-      const flaggedCount = tadaClaimsData.filter((t) => t.status === "Flagged").length;
-
-      setTadaStatusData([
-        { name: "Approved", value: approvedCount, color: COLORS.success },
-        { name: "Pending", value: pendingCount, color: COLORS.warning },
-        { name: "Flagged", value: flaggedCount, color: COLORS.danger },
-        { name: "Rejected", value: rejectedCount, color: COLORS.danger },
-      ].filter(item => item.value > 0));
+      updateVisitsData();
+      updateMonthlyVisitsData();
+      updateSalesmenNoVisitsYesterday();
+      updateSpecimenDetailData();
 
       setIsLoading(false);
     }, 1000);
   }, []);
+
+  useEffect(() => {
+    if (!isLoading) {
+      updateVisitsData();
+    }
+  }, [stateFilter, dateFilter]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      updateMonthlyVisitsData();
+    }
+  }, [monthFilter, stateFilter]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      updateSalesmenNoVisitsYesterday();
+    }
+  }, [stateFilter]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      updateSpecimenDetailData();
+    }
+  }, [stateFilter]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      updateTeamPerformanceData();
+    }
+  }, [stateFilter]);
+
+  const updateTeamPerformanceData = () => {
+    // Team Performance Chart Data - filtered by state
+    const filteredSalesmen = stateFilter === "all"
+      ? salesmenData
+      : salesmenData.filter(s => s.state === stateFilter);
+
+    const performanceData = filteredSalesmen.map((salesman) => ({
+      name: salesman.name.split(" ")[0],
+      achieved: salesman.salesAchieved,
+      target: salesman.salesTarget,
+      achievement: Math.round((salesman.salesAchieved / salesman.salesTarget) * 100),
+    }));
+    setTeamPerformance(performanceData);
+  };
+
+  const updateVisitsData = () => {
+    // Visits per Salesman (filtered by date)
+    const visitCounts = salesmenData.map((salesman) => {
+      let salesmanVisits = visitsData.filter((v) => v.salesmanId === salesman.id);
+
+      // Apply date filter
+      if (dateFilter === "today") {
+        salesmanVisits = salesmanVisits.filter((v) => v.date === "2025-11-25");
+      } else if (dateFilter === "yesterday") {
+        salesmanVisits = salesmanVisits.filter((v) => v.date === "2025-11-24");
+      } else if (dateFilter === "week") {
+        salesmanVisits = salesmanVisits.filter((v) => v.date >= "2025-11-18");
+      }
+
+      // Apply state filter
+      if (stateFilter !== "all") {
+        salesmanVisits = salesmanVisits.filter(() => salesman.state === stateFilter);
+      }
+
+      return {
+        name: salesman.name.split(" ")[0],
+        visits: salesmanVisits.length,
+        state: salesman.state,
+      };
+    }).filter((s) => stateFilter === "all" || s.state === stateFilter);
+
+    setVisitsPerSalesman(visitCounts.sort((a, b) => b.visits - a.visits));
+  };
+
+  const updateMonthlyVisitsData = () => {
+    // Total Visits per Salesman (Monthly) - filtered by state
+    const filteredSalesmen = stateFilter === "all"
+      ? salesmenData
+      : salesmenData.filter(s => s.state === stateFilter);
+
+    const monthlyVisits = filteredSalesmen.map((salesman) => {
+      const salesmanVisits = visitsData.filter((v) =>
+        v.salesmanId === salesman.id && v.date.startsWith(monthFilter)
+      );
+
+      return {
+        name: salesman.name.split(" ")[0],
+        visits: salesmanVisits.length,
+        schoolVisits: salesmanVisits.filter((v) => v.type === "school").length,
+        booksellerVisits: salesmanVisits.filter((v) => v.type === "bookseller").length,
+      };
+    });
+
+    setMonthlyVisitsPerSalesman(monthlyVisits.sort((a, b) => b.visits - a.visits));
+  };
+
+  const updateSalesmenNoVisitsYesterday = () => {
+    // Salesmen with No Visits Yesterday - filtered by state
+    const yesterday = "2025-11-24";
+    const filteredSalesmen = stateFilter === "all"
+      ? salesmenData
+      : salesmenData.filter(s => s.state === stateFilter);
+
+    const salesmenWithNoVisits = filteredSalesmen.filter((salesman) => {
+      const yesterdayVisits = visitsData.filter((v) =>
+        v.salesmanId === salesman.id && v.date === yesterday
+      );
+      return yesterdayVisits.length === 0;
+    }).map((salesman) => ({
+      id: salesman.id,
+      name: salesman.name,
+      state: salesman.state,
+      region: salesman.region,
+    }));
+
+    setSalesmenNoVisitsYesterday(salesmenWithNoVisits);
+  };
+
+  const updateSpecimenDetailData = () => {
+    // Specimen Target vs Used Budget (Detailed) - filtered by state
+    const filteredSalesmen = stateFilter === "all"
+      ? salesmenData
+      : salesmenData.filter(s => s.state === stateFilter);
+
+    const specimenData = filteredSalesmen.map((salesman) => ({
+      name: salesman.name.split(" ")[0],
+      fullName: salesman.name,
+      budget: salesman.specimenBudget,
+      used: salesman.specimenUsed,
+      remaining: salesman.specimenBudget - salesman.specimenUsed,
+      utilization: Math.round((salesman.specimenUsed / salesman.specimenBudget) * 100),
+      state: salesman.state,
+    }));
+
+    setSpecimenDetailData(specimenData.sort((a, b) => b.utilization - a.utilization));
+  };
 
   if (isLoading) {
     return (
@@ -146,7 +261,28 @@ export default function AdminDashboard() {
     );
   }
 
-  const specimenUtilization = Math.round((stats.specimenUsed / stats.totalSpecimenBudget) * 100);
+  // Get unique states for filter
+  const states = Array.from(new Set(salesmenData.map((s) => s.state))).sort();
+
+  // Calculate filtered stats based on state filter
+  const filteredSalesmen = stateFilter === "all"
+    ? salesmenData
+    : salesmenData.filter(s => s.state === stateFilter);
+
+  const filteredSalesmenIds = new Set(filteredSalesmen.map(s => s.id));
+
+  const filteredVisitsToday = visitsData.filter((v) =>
+    v.date.startsWith("2025-11") &&
+    (stateFilter === "all" || filteredSalesmenIds.has(v.salesmanId))
+  );
+
+  const filteredTADA = tadaClaimsData.filter((t) =>
+    t.status === "Pending" &&
+    (stateFilter === "all" || filteredSalesmenIds.has(t.salesmanId))
+  );
+
+  const filteredSpecimenBudget = filteredSalesmen.reduce((sum, s) => sum + s.specimenBudget, 0);
+  const filteredSpecimenUsed = filteredSalesmen.reduce((sum, s) => sum + s.specimenUsed, 0);
 
   return (
     <PageContainer>
@@ -155,12 +291,12 @@ export default function AdminDashboard() {
         description="Overview of CRM operations and performance"
       />
 
-      {/* Top Stats */}
+      {/* Top Stats - KPI Cards First */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <StatsCard
           title="Sales Team"
-          value={stats.totalSalesmen}
-          description="Active salesmen"
+          value={filteredSalesmen.length}
+          description={stateFilter === "all" ? "Active salesmen" : `Salesmen in ${stateFilter}`}
           icon={Users}
         />
         <StatsCard
@@ -171,60 +307,224 @@ export default function AdminDashboard() {
         />
         <StatsCard
           title="Visits Today"
-          value={stats.visitsToday}
+          value={filteredVisitsToday.length}
           description="School & bookseller visits"
           icon={CheckCircle2}
           trend={{ value: 15, isPositive: true }}
         />
         <StatsCard
           title="Pending TA/DA"
-          value={stats.pendingTADA}
+          value={filteredTADA.length}
           description="Awaiting approval"
           icon={DollarSign}
         />
       </div>
 
-      {/* Secondary Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Specimen Budget</p>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+      {/* State-wise Filter - After KPI Cards */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Global Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">State:</span>
+              <Select value={stateFilter} onValueChange={setStateFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="All States" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All States</SelectItem>
+                  {states.map((state) => (
+                    <SelectItem key={state} value={state}>{state}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <p className="text-2xl font-bold mb-1">
-              ₹{(stats.totalSpecimenBudget / 100000).toFixed(1)}L
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {specimenUtilization}% utilized (₹{(stats.specimenUsed / 100000).toFixed(1)}L)
-            </p>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Pattakat Schools</p>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-2xl font-bold mb-1">{stats.pattakatSchools}</p>
-            <p className="text-xs text-muted-foreground">
-              {((stats.pattakatSchools / stats.totalSchools) * 100).toFixed(1)}% of total schools
-            </p>
-          </CardContent>
-        </Card>
+      {/* Visits per Salesman (with Date Filter) */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Visits per Salesman
+            </CardTitle>
+            <Select value={dateFilter} onValueChange={setDateFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={visitsPerSalesman}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="visits" fill={COLORS.primary} name="Number of Visits" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Pending Feedback</p>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-2xl font-bold mb-1">{stats.pendingFeedback}</p>
-            <p className="text-xs text-muted-foreground">Awaiting PM response</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Salesmen with No Visits Yesterday */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            Salesmen with No Visits Yesterday ({salesmenNoVisitsYesterday.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {salesmenNoVisitsYesterday.length === 0 ? (
+            <p className="text-center py-4 text-muted-foreground">All salesmen had visits yesterday!</p>
+          ) : (
+            <>
+              {/* Bar Chart Visualization */}
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={salesmenNoVisitsYesterday.map((s) => ({
+                  name: s.name.split(" ")[0],
+                  fullName: s.name,
+                  noVisits: 1,
+                  region: s.region,
+                  state: s.state,
+                }))} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={100}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-background border rounded-lg p-3 shadow-lg">
+                            <p className="font-medium">{payload[0].payload.fullName}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {payload[0].payload.region}, {payload[0].payload.state}
+                            </p>
+                            <p className="text-sm text-destructive font-medium mt-1">
+                              No visits yesterday
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="noVisits" fill={COLORS.danger} name="No Visits" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* Details List Below Chart */}
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="text-sm font-medium mb-3">Details:</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                  {salesmenNoVisitsYesterday.map((salesman) => (
+                    <div key={salesman.id} className="p-2 rounded-lg border border-destructive/20 bg-destructive/5 text-sm">
+                      <p className="font-medium">{salesman.name}</p>
+                      <p className="text-xs text-muted-foreground">{salesman.region}, {salesman.state}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Total Visits per Salesman (Monthly) */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Total Visits per Salesman (Monthly)
+            </CardTitle>
+            <Select value={monthFilter} onValueChange={setMonthFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Select month" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2025-11">November 2025</SelectItem>
+                <SelectItem value="2025-10">October 2025</SelectItem>
+                <SelectItem value="2025-09">September 2025</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={monthlyVisitsPerSalesman}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="schoolVisits" stackId="a" fill={COLORS.primary} name="School Visits" />
+              <Bar dataKey="booksellerVisits" stackId="a" fill={COLORS.success} name="Bookseller Visits" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Specimen Target vs Used Budget (Detailed) */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            Specimen Target vs Used Budget (Detailed)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {specimenDetailData.map((salesman, index) => (
+              <div key={index} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{salesman.fullName}</p>
+                    <p className="text-xs text-muted-foreground">{salesman.state}</p>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant={
+                      salesman.utilization >= 90 ? "destructive" :
+                      salesman.utilization >= 75 ? "secondary" : "default"
+                    }>
+                      {salesman.utilization}%
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      ₹{(salesman.used / 1000).toFixed(1)}K / ₹{(salesman.budget / 1000).toFixed(1)}K
+                    </p>
+                  </div>
+                </div>
+                <Progress value={salesman.utilization} className="h-2" />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Used: ₹{salesman.used.toLocaleString()}</span>
+                  <span>Remaining: ₹{salesman.remaining.toLocaleString()}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Team Performance Chart - Bar Chart */}
       <Card className="mb-6">
@@ -252,157 +552,40 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Charts Row 1 */}
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
-        {/* Visit Trends - Line Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Visit Trends (Last 7 Days)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={visitTrends}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="day" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="schools"
-                  stroke={COLORS.primary}
-                  strokeWidth={2}
-                  name="School Visits"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="booksellers"
-                  stroke={COLORS.success}
-                  strokeWidth={2}
-                  name="Bookseller Visits"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* School Distribution - Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <PieChartIcon className="h-5 w-5" />
-              School Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={schoolDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${((percent as number)* 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {schoolDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-              {schoolDistribution.map((item, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span>{item.name}</span>
-                  </div>
-                  <span className="font-semibold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Row 2 */}
-      <div className="grid gap-4 md:grid-cols-2 mb-6">
-        {/* Specimen Utilization - Area Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Specimen Budget Utilization
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={specimenUtilizationData} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(value) => `${value}%`} />
-                <YAxis dataKey="name" type="category" width={60} />
-                <Tooltip formatter={(value: any) => [`${value}%`, "Utilization"]} />
-                <Bar dataKey="utilization" fill={COLORS.purple} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* TA/DA Status - Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <DollarSign className="h-5 w-5" />
-              TA/DA Claims Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={tadaStatusData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${((percent as number)* 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {tadaStatusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-2">
-              {tadaStatusData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span>{item.name}</span>
-                  </div>
-                  <span className="font-semibold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Visit Trends */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Visit Trends (Last 7 Days)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={visitTrends}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="day" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="schools"
+                stroke={COLORS.primary}
+                strokeWidth={2}
+                name="School Visits"
+              />
+              <Line
+                type="monotone"
+                dataKey="booksellers"
+                stroke={COLORS.success}
+                strokeWidth={2}
+                name="Bookseller Visits"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       {/* Recent Activities */}
       <div className="grid gap-4 md:grid-cols-2 mb-6">
@@ -481,25 +664,27 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {salesmenData.map((salesman) => {
-              const achievement = Math.round((salesman.salesAchieved / salesman.salesTarget) * 100);
-              return (
-                <div key={salesman.id} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex-1">
-                    <p className="font-medium">{salesman.name}</p>
-                    <p className="text-sm text-muted-foreground">{salesman.region} - {salesman.state}</p>
+            {salesmenData
+              .filter((s) => stateFilter === "all" || s.state === stateFilter)
+              .map((salesman) => {
+                const achievement = Math.round((salesman.salesAchieved / salesman.salesTarget) * 100);
+                return (
+                  <div key={salesman.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex-1">
+                      <p className="font-medium">{salesman.name}</p>
+                      <p className="text-sm text-muted-foreground">{salesman.region} - {salesman.state}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant={achievement >= 75 ? "default" : achievement >= 50 ? "secondary" : "destructive"}>
+                        {achievement}%
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        ₹{(salesman.salesAchieved / 100000).toFixed(1)}L / ₹{(salesman.salesTarget / 100000).toFixed(1)}L
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <Badge variant={achievement >= 75 ? "default" : achievement >= 50 ? "secondary" : "destructive"}>
-                      {achievement}%
-                    </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      ₹{(salesman.salesAchieved / 100000).toFixed(1)}L / ₹{(salesman.salesTarget / 100000).toFixed(1)}L
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </CardContent>
       </Card>

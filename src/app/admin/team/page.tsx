@@ -199,9 +199,11 @@ export default function TeamManagementPage() {
 
                     {/* Actions */}
                     <div className="flex gap-2 mt-4 pt-4 border-t">
-                      <Button variant="outline" size="sm">
-                        View Dashboard
-                      </Button>
+                      <Link href={`/admin/team/${salesman.id}`}>
+                        <Button variant="outline" size="sm">
+                          View Dashboard
+                        </Button>
+                      </Link>
                       <Button variant="outline" size="sm">
                         Reassign Schools
                       </Button>
