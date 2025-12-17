@@ -22,6 +22,7 @@ import {
   Store,
   User,
   Menu,
+  CalendarCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -73,6 +74,8 @@ const navGroups = [
     label: "Management",
     items: [
       { href: "/admin/managers", label: "Managers", icon: UserCog },
+      { href: "/admin/pm-schedule", label: "PM Schedule", icon: CalendarCheck },
+      { href: "/admin/pm-calendar", label: "PM Calendar", icon: Calendar },
       { href: "/admin/tour-plans", label: "Tour Plans", icon: Calendar },
       { href: "/admin/tada", label: "TA/DA Approval", icon: DollarSign },
       { href: "/admin/feedback", label: "Feedback Manager", icon: MessageSquare },

@@ -1,8 +1,11 @@
 // School Types
 export interface School {
+
   id: string;
   name: string;
   city: string;
+    station: string;
+  state: string;
   board: string;
   strength: number;
   address: string;
