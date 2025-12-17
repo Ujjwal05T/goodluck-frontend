@@ -21,7 +21,9 @@
         "salesmanId": "SM001",
         "salesmanName": "Amit Sharma",
         "activity": "Book Promotion Workshop - Class 9-10 Science Series",
-        "status": "confirmed"
+        "topic": "Science Series - Grade 9-10",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH002",
@@ -36,7 +38,9 @@
         "salesmanId": "SM001",
         "salesmanName": "Amit Sharma",
         "activity": "Principal Meeting - New Book Series Discussion",
-        "status": "confirmed"
+        "topic": "New Book Series Discussion",
+        "approvalStatus": "approved",
+        "isCompleted": false
       },
       {
         "id": "SCH003",
@@ -51,7 +55,9 @@
         "salesmanId": "SM002",
         "salesmanName": "Vikram Singh",
         "activity": "Teacher Training - Mathematics Book Series",
-        "status": "pending"
+        "topic": "Mathematics - Teacher Training",
+        "approvalStatus": "requested",
+        "isCompleted": false
       },
       {
         "id": "SCH004",
@@ -66,7 +72,9 @@
         "salesmanId": "SM001",
         "salesmanName": "Amit Sharma",
         "activity": "Book Promotion - English Literature Series",
-        "status": "confirmed"
+        "topic": "English Literature Series",
+        "approvalStatus": "completed",
+        "isCompleted": true
       }
     ]
   },
@@ -92,7 +100,9 @@
         "salesmanId": "SM005",
         "salesmanName": "Ravi Patel",
         "activity": "Interactive Session - Science Practical Books",
-        "status": "confirmed"
+        "topic": "Science Practical Books",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH006",
@@ -107,7 +117,9 @@
         "salesmanId": "SM005",
         "salesmanName": "Ravi Patel",
         "activity": "Book Launch Event - Social Studies Series",
-        "status": "confirmed"
+        "topic": "Social Studies Series Launch",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH007",
@@ -122,7 +134,9 @@
         "salesmanId": "SM005",
         "salesmanName": "Ravi Patel",
         "activity": "Coordination Meeting with Academic Head",
-        "status": "pending"
+        "topic": "Academic Coordination",
+        "approvalStatus": "approved",
+        "isCompleted": false
       }
     ]
   },
@@ -148,7 +162,9 @@
         "salesmanId": "SM003",
         "salesmanName": "Suresh Mehta",
         "activity": "Book Exhibition - Complete Book Series",
-        "status": "pending"
+        "topic": "Complete Book Series Exhibition",
+        "approvalStatus": "requested",
+        "isCompleted": false
       }
     ]
   },
@@ -174,13 +190,15 @@
         "salesmanId": "SM004",
         "salesmanName": "Krishna Rao",
         "activity": "Teacher Workshop - Digital Learning Books",
-        "status": "confirmed"
+        "topic": "Digital Learning Books - Teachers",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH010",
         "date": "2025-12-16",
-        "startTime": "03:00 PM",
-        "endTime": "05:00 PM",
+        "startTime": "11:30 AM",
+        "endTime": "01:00 PM",
         "type": "meeting",
         "schoolId": "SCH008",
         "schoolName": "Oakridge International School",
@@ -189,7 +207,10 @@
         "salesmanId": "SM004",
         "salesmanName": "Krishna Rao",
         "activity": "Follow-up Meeting with Management",
-        "status": "confirmed"
+        "topic": "Management Follow-up",
+        "approvalStatus": "booked",
+        "isCompleted": false,
+        "hasConflict": true
       }
     ]
   },
@@ -215,7 +236,9 @@
         "salesmanId": "SM006",
         "salesmanName": "Mohan Lal",
         "activity": "Book Promotion - Hindi Literature Series",
-        "status": "confirmed"
+        "topic": "Hindi Literature Series",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH012",
@@ -230,7 +253,9 @@
         "salesmanId": "SM006",
         "salesmanName": "Mohan Lal",
         "activity": "Parent-Teacher Session - Book Benefits",
-        "status": "pending"
+        "topic": "Parent-Teacher Session",
+        "approvalStatus": "approved",
+        "isCompleted": false
       }
     ]
   },
@@ -256,7 +281,9 @@
         "salesmanId": "SM007",
         "salesmanName": "Ganesh Kumar",
         "activity": "Interactive Demo - Smart Learning Books",
-        "status": "pending"
+        "topic": "Smart Learning Books Demo",
+        "approvalStatus": "requested",
+        "isCompleted": false
       }
     ]
   },
@@ -282,7 +309,9 @@
         "salesmanId": "SM008",
         "salesmanName": "Ramesh Kumar",
         "activity": "Book Fair Setup and Promotion",
-        "status": "confirmed"
+        "topic": "Book Fair Promotion",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH015",
@@ -297,7 +326,9 @@
         "salesmanId": "SM008",
         "salesmanName": "Ramesh Kumar",
         "activity": "Principal Discussion - Annual Book Contract",
-        "status": "confirmed"
+        "topic": "Annual Contract Discussion",
+        "approvalStatus": "booked",
+        "isCompleted": false
       }
     ]
   },
@@ -333,7 +364,9 @@
         "salesmanId": "SM009",
         "salesmanName": "Akhil Sharma",
         "activity": "Book Demonstration - Primary Level Books",
-        "status": "confirmed"
+        "topic": "Primary Level Books Demo",
+        "approvalStatus": "booked",
+        "isCompleted": false
       },
       {
         "id": "SCH017",
@@ -348,7 +381,9 @@
         "salesmanId": "SM009",
         "salesmanName": "Akhil Sharma",
         "activity": "Teacher Training - Advanced Book Series",
-        "status": "confirmed"
+        "topic": "Advanced Series - Teacher Training",
+        "approvalStatus": "booked",
+        "isCompleted": false
       }
     ]
   },
@@ -374,7 +409,9 @@
         "salesmanId": "SM010",
         "salesmanName": "Rajiv Menon",
         "activity": "Book Launch - Kerala State Board Series",
-        "status": "pending"
+        "topic": "Kerala State Board Series Launch",
+        "approvalStatus": "approved",
+        "isCompleted": false
       }
     ]
   }

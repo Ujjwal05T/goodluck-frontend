@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, Clock, MapPin, User, Briefcase, Phone, Mail, Search, Filter, ChevronRight, Plus } from "lucide-react";
+import { Calendar, Clock, MapPin, User, Briefcase, Phone, Mail, Search, Filter, ChevronRight, Plus, AlertTriangle, CheckCircle2 } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
 import PageHeader from "@/components/layouts/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +50,10 @@ interface Schedule {
   salesmanId: string;
   salesmanName: string;
   activity: string;
-  status: string;
+  topic: string;
+  approvalStatus: "requested" | "approved" | "booked" | "completed";
+  isCompleted: boolean;
+  hasConflict?: boolean;
 }
 
 interface ProductManager {
@@ -161,7 +164,9 @@ export default function PMSchedulePage() {
       salesmanId: formData.salesmanId,
       salesmanName: selectedSalesman?.name || "",
       activity: formData.activity,
-      status: "pending",
+      topic: formData.activity.split(' - ')[0] || formData.activity.substring(0, 30),
+      approvalStatus: "requested" as const,
+      isCompleted: false,
     };
 
     // Update the product manager's schedules
@@ -586,21 +591,39 @@ export default function PMSchedulePage() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="max-w-[280px]">
-                                    <div className="text-sm line-clamp-2">{schedule.activity}</div>
+                                    <div className="space-y-1">
+                                      <div className="text-sm font-semibold text-blue-700 dark:text-blue-400">{schedule.topic}</div>
+                                      <div className="text-xs text-muted-foreground line-clamp-1">{schedule.activity}</div>
+                                    </div>
                                   </TableCell>
                                   <TableCell>
-                                    <Badge
-                                      variant={
-                                        schedule.status === "confirmed" ? "default" : "secondary"
-                                      }
-                                      className={
-                                        schedule.status === "confirmed"
-                                          ? "bg-green-500 hover:bg-green-600"
-                                          : ""
-                                      }
-                                    >
-                                      {schedule.status}
-                                    </Badge>
+                                    <div className="flex flex-col gap-1">
+                                      <Badge
+                                        className={
+                                          schedule.approvalStatus === "requested"
+                                            ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                                            : schedule.approvalStatus === "approved"
+                                            ? "bg-blue-500 hover:bg-blue-600 text-white"
+                                            : schedule.approvalStatus === "booked"
+                                            ? "bg-green-500 hover:bg-green-600 text-white"
+                                            : "bg-gray-500 hover:bg-gray-600 text-white"
+                                        }
+                                      >
+                                        {schedule.approvalStatus}
+                                      </Badge>
+                                      {schedule.isCompleted && (
+                                        <Badge className="bg-gray-600 text-white text-xs">
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          Completed
+                                        </Badge>
+                                      )}
+                                      {schedule.hasConflict && (
+                                        <Badge variant="destructive" className="text-xs">
+                                          <AlertTriangle className="h-3 w-3 mr-1" />
+                                          Conflict
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -688,21 +711,39 @@ export default function PMSchedulePage() {
                                     </div>
                                   </TableCell>
                                   <TableCell className="max-w-[280px]">
-                                    <div className="text-sm line-clamp-2">{schedule.activity}</div>
+                                    <div className="space-y-1">
+                                      <div className="text-sm font-semibold text-blue-700 dark:text-blue-400">{schedule.topic}</div>
+                                      <div className="text-xs text-muted-foreground line-clamp-1">{schedule.activity}</div>
+                                    </div>
                                   </TableCell>
                                   <TableCell>
-                                    <Badge
-                                      variant={
-                                        schedule.status === "confirmed" ? "default" : "secondary"
-                                      }
-                                      className={
-                                        schedule.status === "confirmed"
-                                          ? "bg-green-500 hover:bg-green-600"
-                                          : ""
-                                      }
-                                    >
-                                      {schedule.status}
-                                    </Badge>
+                                    <div className="flex flex-col gap-1">
+                                      <Badge
+                                        className={
+                                          schedule.approvalStatus === "requested"
+                                            ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                                            : schedule.approvalStatus === "approved"
+                                            ? "bg-blue-500 hover:bg-blue-600 text-white"
+                                            : schedule.approvalStatus === "booked"
+                                            ? "bg-green-500 hover:bg-green-600 text-white"
+                                            : "bg-gray-500 hover:bg-gray-600 text-white"
+                                        }
+                                      >
+                                        {schedule.approvalStatus}
+                                      </Badge>
+                                      {schedule.isCompleted && (
+                                        <Badge className="bg-gray-600 text-white text-xs">
+                                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                                          Completed
+                                        </Badge>
+                                      )}
+                                      {schedule.hasConflict && (
+                                        <Badge variant="destructive" className="text-xs">
+                                          <AlertTriangle className="h-3 w-3 mr-1" />
+                                          Conflict
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}

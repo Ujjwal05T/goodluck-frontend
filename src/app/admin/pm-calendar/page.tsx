@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, User, Building2, Briefcase, Phone, Filter } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, User, Building2, Briefcase, Phone, Filter, AlertTriangle, CheckCircle2 } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
 import PageHeader from "@/components/layouts/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +33,10 @@ interface Schedule {
   salesmanId: string;
   salesmanName: string;
   activity: string;
-  status: string;
+  topic: string;
+  approvalStatus: "requested" | "approved" | "booked" | "completed";
+  isCompleted: boolean;
+  hasConflict?: boolean;
 }
 
 interface ProductManager {
@@ -121,6 +124,54 @@ export default function PMCalendarPage() {
   const isToday = (date: Date) => {
     const today = new Date();
     return formatDate(date) === formatDate(today);
+  };
+
+  // Helper function to check for time conflicts
+  const detectConflicts = (schedules: Schedule[]) => {
+    for (let i = 0; i < schedules.length; i++) {
+      for (let j = i + 1; j < schedules.length; j++) {
+        if (schedules[i].date === schedules[j].date) {
+          const start1 = schedules[i].startTime;
+          const end1 = schedules[i].endTime;
+          const start2 = schedules[j].startTime;
+          const end2 = schedules[j].endTime;
+
+          // Check for overlap
+          if ((start1 < end2 && start2 < end1) || (start2 < end1 && start1 < end2)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  // Get approval status badge styling
+  const getApprovalStatusBadge = (status: string) => {
+    const config = {
+      requested: { color: "bg-yellow-500 hover:bg-yellow-600", label: "Requested" },
+      approved: { color: "bg-blue-500 hover:bg-blue-600", label: "Approved" },
+      booked: { color: "bg-green-500 hover:bg-green-600", label: "Booked" },
+      completed: { color: "bg-gray-500 hover:bg-gray-600", label: "Completed" }
+    };
+    return config[status as keyof typeof config] || config.requested;
+  };
+
+  // Get approval status border color
+  const getApprovalBorderColor = (status: string) => {
+    const colors = {
+      requested: "border-yellow-500",
+      approved: "border-blue-500",
+      booked: "border-green-500",
+      completed: "border-gray-500"
+    };
+    return colors[status as keyof typeof colors] || colors.requested;
+  };
+
+  // Check if PM is busy today
+  const isPMBusyToday = (pm: ProductManager) => {
+    const todayStr = formatDate(new Date());
+    return pm.schedules.some((s) => s.date === todayStr);
   };
 
   const weekDates = getWeekDates();
@@ -320,15 +371,16 @@ export default function PMCalendarPage() {
                     </div>
                   </div>
 
+                  {/* Free/Busy Today Indicator */}
                   <Badge
-                    variant={pm.currentStatus === "Busy" ? "default" : "secondary"}
-                    className={`w-full justify-center text-xs ${
-                      pm.currentStatus === "Busy"
-                        ? "bg-orange-500 hover:bg-orange-600"
+                    variant={isPMBusyToday(pm) ? "default" : "secondary"}
+                    className={`w-full justify-center text-xs font-semibold ${
+                      isPMBusyToday(pm)
+                        ? "bg-orange-500 hover:bg-orange-600 text-white"
                         : "bg-green-500 hover:bg-green-600 text-white"
                     }`}
                   >
-                    {pm.currentStatus}
+                    {isPMBusyToday(pm) ? "🔴 Busy Today" : "🟢 Free Today"}
                   </Badge>
                 </div>
               </div>
@@ -337,86 +389,142 @@ export default function PMCalendarPage() {
               {weekDates.map((date, dateIndex) => {
                 const schedules = getSchedulesForDateAndPM(date, pm);
                 const isCurrentDay = isToday(date);
+                const hasConflict = detectConflicts(schedules);
+                const isAvailable = schedules.length === 0;
 
                 return (
                   <div
                     key={dateIndex}
-                    className={`rounded-lg min-h-[140px] p-2 border ${
+                    className={`rounded-lg min-h-[140px] p-2 border-2 relative ${
                       isCurrentDay
-                        ? "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200"
-                        : "bg-card"
+                        ? "bg-blue-50/50 dark:bg-blue-950/20 border-blue-300"
+                        : isAvailable
+                        ? "bg-green-50/30 dark:bg-green-950/10 border-green-300"
+                        : "bg-orange-50/30 dark:bg-orange-950/10 border-orange-300"
                     }`}
                   >
+                    {/* Availability Indicator Badge */}
+                    <div className="absolute -top-2 -right-2 z-10">
+                      <Badge
+                        className={`text-[8px] px-1.5 py-0.5 font-semibold shadow-sm ${
+                          isAvailable
+                            ? "bg-green-500 hover:bg-green-600 text-white"
+                            : "bg-orange-500 hover:bg-orange-600 text-white"
+                        }`}
+                      >
+                        {isAvailable ? "Available" : "Booked"}
+                      </Badge>
+                    </div>
+
+                    {/* Conflict Warning */}
+                    {hasConflict && (
+                      <div className="absolute top-1 left-1 z-10">
+                        <Badge variant="destructive" className="text-[8px] px-1 py-0.5 flex items-center gap-1">
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          Conflict
+                        </Badge>
+                      </div>
+                    )}
+
                     {schedules.length === 0 ? (
-                      <div className="flex items-center justify-center h-full">
-                        <span className="text-xs text-muted-foreground">—</span>
+                      <div className="flex flex-col items-center justify-center h-full">
+                        <CheckCircle2 className="h-5 w-5 text-green-500 mb-1 opacity-50" />
+                        <span className="text-xs text-green-600 font-medium">Free</span>
                       </div>
                     ) : (
-                      <div className="space-y-1.5">
-                        {schedules.map((schedule) => (
-                          <Popover key={schedule.id}>
-                            <PopoverTrigger asChild>
-                              <div className="bg-white dark:bg-gray-900 border-l-4 border-blue-500 rounded p-2 cursor-pointer hover:shadow-md transition-all">
-                                <div className="flex items-center justify-between gap-1 mb-1">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[9px] px-1 py-0 h-4"
-                                  >
-                                    {schedule.type === "workshop" ? (
-                                      <Briefcase className="h-2 w-2" />
-                                    ) : (
-                                      <User className="h-2 w-2" />
-                                    )}
-                                  </Badge>
-                                  <Badge
-                                    className={`text-[9px] px-1 py-0 h-4 ${
-                                      schedule.status === "confirmed"
-                                        ? "bg-green-500"
-                                        : "bg-gray-400"
-                                    }`}
-                                  >
-                                    {schedule.status}
-                                  </Badge>
-                                </div>
+                      <div className="space-y-1.5 mt-4">
+                        {schedules.map((schedule) => {
+                          const statusBadge = getApprovalStatusBadge(schedule.approvalStatus);
+                          const borderColor = getApprovalBorderColor(schedule.approvalStatus);
 
-                                <div className="text-[10px] font-medium text-muted-foreground mb-1 flex items-center gap-1">
-                                  <Clock className="h-2.5 w-2.5" />
-                                  {schedule.startTime}
-                                </div>
+                          return (
+                            <Popover key={schedule.id}>
+                              <PopoverTrigger asChild>
+                                <div className={`bg-white dark:bg-gray-900 border-l-4 ${borderColor} rounded p-2 cursor-pointer hover:shadow-md transition-all ${schedule.isCompleted ? 'opacity-60' : ''} ${schedule.hasConflict ? 'ring-2 ring-red-400' : ''}`}>
+                                  <div className="flex items-center justify-between gap-1 mb-1">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[9px] px-1 py-0 h-4"
+                                    >
+                                      {schedule.type === "workshop" ? (
+                                        <Briefcase className="h-2 w-2" />
+                                      ) : (
+                                        <User className="h-2 w-2" />
+                                      )}
+                                    </Badge>
+                                    <Badge
+                                      className={`text-[9px] px-1 py-0 h-4 ${statusBadge.color} text-white`}
+                                    >
+                                      {statusBadge.label}
+                                    </Badge>
+                                  </div>
 
-                                <div className="text-[11px] font-semibold line-clamp-2 leading-tight mb-1">
-                                  {schedule.schoolName}
-                                </div>
+                                  <div className="text-[10px] font-medium text-muted-foreground mb-1 flex items-center gap-1">
+                                    <Clock className="h-2.5 w-2.5" />
+                                    {schedule.startTime}
+                                  </div>
 
-                                <div className="text-[10px] text-muted-foreground line-clamp-1">
-                                  {schedule.city}
+                                  {/* Workshop Topic/Purpose - Visible without popover */}
+                                  <div className="text-[11px] font-bold text-blue-700 dark:text-blue-400 line-clamp-2 leading-tight mb-1">
+                                    {schedule.topic}
+                                  </div>
+
+                                  <div className="text-[10px] font-medium line-clamp-1 leading-tight mb-0.5">
+                                    {schedule.schoolName}
+                                  </div>
+
+                                  <div className="text-[9px] text-muted-foreground line-clamp-1">
+                                    {schedule.city}
+                                  </div>
+
+                                  {schedule.isCompleted && (
+                                    <div className="mt-1">
+                                      <Badge className="text-[8px] px-1 py-0 bg-gray-600 text-white">
+                                        ✓ Completed
+                                      </Badge>
+                                    </div>
+                                  )}
                                 </div>
-                              </div>
-                            </PopoverTrigger>
+                              </PopoverTrigger>
                             <PopoverContent className="w-80" align="start">
                               <div className="space-y-3">
                                 <div>
-                                  <h4 className="font-semibold mb-1">Schedule Details</h4>
-                                  <div className="flex gap-2">
+                                  <h4 className="font-semibold mb-2">Schedule Details</h4>
+                                  <div className="flex gap-2 flex-wrap">
                                     <Badge
                                       variant="outline"
                                       className="capitalize"
                                     >
                                       {schedule.type}
                                     </Badge>
-                                    <Badge
-                                      className={
-                                        schedule.status === "confirmed"
-                                          ? "bg-green-500"
-                                          : "bg-gray-400"
-                                      }
-                                    >
-                                      {schedule.status}
+                                    <Badge className={`${statusBadge.color} text-white`}>
+                                      {statusBadge.label}
                                     </Badge>
+                                    {schedule.isCompleted && (
+                                      <Badge className="bg-gray-600 text-white">
+                                        Completed
+                                      </Badge>
+                                    )}
+                                    {schedule.hasConflict && (
+                                      <Badge variant="destructive" className="flex items-center gap-1">
+                                        <AlertTriangle className="h-3 w-3" />
+                                        Time Conflict
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
 
                                 <div className="space-y-2 text-sm">
+                                  <div className="flex items-start gap-2">
+                                    <Briefcase className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                                    <div>
+                                      <div className="font-medium">Workshop Topic</div>
+                                      <div className="text-blue-700 dark:text-blue-400 font-semibold">
+                                        {schedule.topic}
+                                      </div>
+                                    </div>
+                                  </div>
+
                                   <div className="flex items-start gap-2">
                                     <Clock className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                                     <div>
@@ -472,11 +580,24 @@ export default function PMCalendarPage() {
                                       </div>
                                     </div>
                                   </div>
+
+                                  {schedule.hasConflict && (
+                                    <div className="p-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded">
+                                      <div className="flex items-start gap-2 text-red-700 dark:text-red-400">
+                                        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                                        <div className="text-xs">
+                                          <div className="font-semibold">Double Booking Detected</div>
+                                          <div>This PM has overlapping schedules on this date</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </PopoverContent>
                           </Popover>
-                        ))}
+                        );
+                        })}
                       </div>
                     )}
                   </div>
