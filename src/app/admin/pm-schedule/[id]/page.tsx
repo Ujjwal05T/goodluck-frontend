@@ -64,10 +64,11 @@ interface Schedule {
   salesmanId: string;
   salesmanName: string;
   activity: string;
-  topic: string;
-  approvalStatus: "requested" | "approved" | "booked" | "completed";
-  isCompleted: boolean;
+  topic?: string;
+  approvalStatus?: "requested" | "approved" | "booked" | "completed";
+  isCompleted?: boolean;
   hasConflict?: boolean;
+  status: string;
 }
 
 interface ProductManager {

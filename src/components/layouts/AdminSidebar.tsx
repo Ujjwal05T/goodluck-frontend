@@ -23,6 +23,8 @@ import {
   User,
   Menu,
   CalendarCheck,
+  Receipt,
+  ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -79,6 +81,14 @@ const navGroups = [
       { href: "/admin/tour-plans", label: "Tour Plans", icon: Calendar },
       { href: "/admin/tada", label: "TA/DA Approval", icon: DollarSign },
       { href: "/admin/feedback", label: "Feedback Manager", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Expense Management",
+    items: [
+      { href: "/admin/expenses", label: "All Expense Reports", icon: Receipt },
+      { href: "/admin/expenses/policy", label: "Expense Policies", icon: ClipboardList },
+      { href: "/admin/expenses/reports", label: "Expense Analytics", icon: TrendingUp },
     ],
   },
   {

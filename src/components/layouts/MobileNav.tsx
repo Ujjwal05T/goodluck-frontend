@@ -19,6 +19,8 @@ import {
   ClipboardList,
   MapPinned,
   History,
+  Receipt,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +45,11 @@ const navItems = [
   { type: "separator", label: "Book Sellers" },
   { href: "/salesman/booksellers", label: "Book Sellers", icon: Users },
   { href: "/salesman/booksellers/add-visit", label: "Add Seller Visit", icon: Plus },
+
+  { type: "separator", label: "Expenses" },
+  { href: "/salesman/expenses", label: "My Expenses", icon: Receipt },
+  { href: "/salesman/expenses/add", label: "Add Expense", icon: Plus },
+  { href: "/salesman/expenses/create-report", label: "Create Report", icon: FileText },
 
   { type: "separator", label: "Other" },
   { href: "/salesman/contacts", label: "My Contact Persons", icon: UserCircle },

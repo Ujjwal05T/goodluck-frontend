@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, User, Building2, Briefcase, Phone, Filter, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, User, Building2, Briefcase, Phone, Filter, AlertTriangle, CheckCircle2, Search } from "lucide-react";
 import PageContainer from "@/components/layouts/PageContainer";
 import PageHeader from "@/components/layouts/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 
 interface Schedule {
   id: string;
@@ -56,6 +57,7 @@ export default function PMCalendarPage() {
   const [currentWeekStart, setCurrentWeekStart] = useState(new Date());
   const [stateFilter, setStateFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const data = require("@/lib/mock-data/product-manager-schedules.json");
@@ -84,8 +86,24 @@ export default function PMCalendarPage() {
       );
     }
 
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((pm) =>
+        pm.name.toLowerCase().includes(query) ||
+        pm.email.toLowerCase().includes(query) ||
+        pm.id.toLowerCase().includes(query) ||
+        pm.state.toLowerCase().includes(query) ||
+        pm.schedules.some(s =>
+          s.schoolName.toLowerCase().includes(query) ||
+          s.city.toLowerCase().includes(query) ||
+          s.topic.toLowerCase().includes(query) ||
+          s.activity.toLowerCase().includes(query)
+        )
+      );
+    }
+
     setFilteredManagers(filtered);
-  }, [stateFilter, statusFilter, productManagers]);
+  }, [stateFilter, statusFilter, searchQuery, productManagers]);
 
   const getWeekDates = () => {
     const dates = [];
@@ -195,13 +213,25 @@ export default function PMCalendarPage() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between mb-6">
-        <PageHeader
-          title="Centralized PM Calendar"
-          description="View all product manager schedules across the week"
-        />
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <PageHeader
+            title="Centralized PM Calendar"
+            description="View all product manager schedules across the week"
+          />
+        </div>
 
         <div className="flex items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search PM name, school, city, topic..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
           <Select value={stateFilter} onValueChange={setStateFilter}>
             <SelectTrigger className="w-[180px]">
               <MapPin className="mr-2 h-4 w-4" />
