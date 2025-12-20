@@ -10,12 +10,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PageSkeleton } from "@/components/ui/skeleton-loaders";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 import salesmenData from "@/lib/mock-data/salesmen.json";
 
 export default function TeamManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [salesmen, setSalesmen] = useState<any[]>([]);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    contactNo: "",
+    state: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   useEffect(() => {
     setTimeout(() => {
@@ -23,6 +53,61 @@ export default function TeamManagementPage() {
       setIsLoading(false);
     }, 800);
   }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, state: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic Validation
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+    if (!formData.name || !formData.email || !formData.state) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    // Create a mock new salesman object
+    const newSalesman = {
+      id: `SM${Math.floor(Math.random() * 1000)}`,
+      name: formData.name,
+      email: formData.email,
+      phone: formData.contactNo,
+      region: "North", // Default for mock
+      state: formData.state,
+      managerName: "System Admin",
+      joinedDate: new Date().toISOString(),
+      assignedSchools: 0,
+      salesTarget: 500000,
+      salesAchieved: 0,
+      specimenBudget: 50000,
+      specimenUsed: 0,
+    };
+
+    // Update state to show the new user immediately
+    setSalesmen((prev) => [newSalesman, ...prev]);
+    
+    // Reset form and close dialog
+    toast.success("Salesman added successfully!");
+    setFormData({
+      name: "",
+      email: "",
+      contactNo: "",
+      state: "",
+      password: "",
+      confirmPassword: "",
+    });
+    setIsAddDialogOpen(false);
+  };
 
   if (isLoading) {
     return (
@@ -38,10 +123,117 @@ export default function TeamManagementPage() {
         title="Sales Team Management"
         description="Manage your sales team and assignments"
         action={
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Salesman
-          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Salesman
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Add New Salesman</DialogTitle>
+                <DialogDescription>
+                  Create a new account for a field sales representative.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <form onSubmit={handleSubmit} className="space-y-4 py-4">
+                {/* Name */}
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="e.g. Rahul Verma"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                {/* Email & Contact Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="rahul@example.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="contactNo">Contact No.</Label>
+                    <Input
+                      id="contactNo"
+                      name="contactNo"
+                      type="tel"
+                      placeholder="9876543210"
+                      value={formData.contactNo}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* School State Dropdown */}
+                <div className="grid gap-2">
+                  <Label htmlFor="state">School State</Label>
+                  <Select onValueChange={handleSelectChange} value={formData.state}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select State" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Delhi">Delhi</SelectItem>
+                      <SelectItem value="Uttar Pradesh">Uttar Pradesh</SelectItem>
+                      <SelectItem value="Haryana">Haryana</SelectItem>
+                      <SelectItem value="Punjab">Punjab</SelectItem>
+                      <SelectItem value="Rajasthan">Rajasthan</SelectItem>
+                      <SelectItem value="Maharashtra">Maharashtra</SelectItem>
+                      <SelectItem value="Bihar">Bihar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Password & Confirm Row */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Create Account</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         }
       />
 
@@ -74,12 +266,12 @@ export default function TeamManagementPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-2xl font-bold">
-              {Math.round(
+              {salesmen.length > 0 ? Math.round(
                 salesmen.reduce(
                   (sum, s) => sum + (s.salesAchieved / s.salesTarget) * 100,
                   0
                 ) / salesmen.length
-              )}
+              ) : 0}
               %
             </p>
           </CardContent>
